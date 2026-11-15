@@ -10,6 +10,16 @@ Changes land under `[Unreleased]` first, in whichever of *Added*, *Changed*,
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dropping a file onto the window works.** It never did. The drop handler listened for
+  `tauri::WebviewEvent::DragDrop`, which the runtime only sends for a separate child
+  webview; this window's webview is its whole content, so its drops arrive as a
+  `WindowEvent::DragDrop` instead, and nothing was listening. The overlay stayed away and
+  the drop was discarded in silence. The same handler now runs on the window event, so
+  hovering a file shows the overlay and releasing it opens the document — which is what
+  the 0.1.0 notes claimed all along.
+
 ## [0.6.0] - 2026-11-14
 
 ### Changed

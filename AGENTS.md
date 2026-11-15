@@ -161,7 +161,12 @@ useful to anyone changing the internals.
   `readingOffset()` in `app.js` — never `window.scrollY`, which no longer means anything.
   The pinned bar stays a `position: fixed` overlay below the toolbar (out of flow, so it
   never shifts the text), and the settings dialog's scroll lock is `html.modal-open #main`.
-- Drag & drop arrives as `tauri::WebviewEvent::DragDrop`, **not** `WindowEvent`.
+- Drag & drop arrives at `.on_window_event` as `tauri::WindowEvent::DragDrop`, **not**
+  `WebviewEvent::DragDrop`. The two only differ for a separate child webview
+  (`WebviewKind::WindowChild`, which needs Tauri's `unstable` feature): this window's
+  webview *is* its whole content (`WebviewKind::WindowContent`), and the runtime sends
+  those drops as a synthesized *window* event instead. A handler on the webview alone
+  catches nothing, which is how drops went silently ignored.
 - Asset protocol scope in `tauri.conf.json` is intentionally empty; Rust grants
   the open document's folder at runtime. Don't widen it in config.
 - CSP is `script-src 'self'` / `style-src 'self'`: no inline `<script>` (and

@@ -2418,18 +2418,22 @@ fn run(startup_path: Option<PathBuf>) {
 
             Ok(())
         })
-        // Drag & drop from Explorer. Drops are delivered as *webview* events in
-        // Tauri v2, not window events.
-        .on_webview_event(|webview, event| match event {
-            tauri::WebviewEvent::DragDrop(tauri::DragDropEvent::Enter { .. })
-            | tauri::WebviewEvent::DragDrop(tauri::DragDropEvent::Over { .. }) => {
-                let _ = webview.emit(EVENT_DRAG, DragState { active: true });
+        // Drag & drop from Explorer, and the one other window event the app cares
+        // about. A drop lands as a *window* event, not a webview one: the runtime
+        // only routes `WebviewEvent::DragDrop` for a separate child webview, and
+        // without Tauri's `unstable` feature this window's webview is its whole
+        // content (`WebviewKind::WindowContent`), which it sends as a synthesized
+        // window event instead. Listening on the webview alone caught nothing.
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Enter { .. })
+            | tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Over { .. }) => {
+                let _ = window.emit(EVENT_DRAG, DragState { active: true });
             }
-            tauri::WebviewEvent::DragDrop(tauri::DragDropEvent::Leave) => {
-                let _ = webview.emit(EVENT_DRAG, DragState { active: false });
+            tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Leave) => {
+                let _ = window.emit(EVENT_DRAG, DragState { active: false });
             }
-            tauri::WebviewEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {
-                let _ = webview.emit(EVENT_DRAG, DragState { active: false });
+            tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {
+                let _ = window.emit(EVENT_DRAG, DragState { active: false });
                 let chosen = paths
                     .iter()
                     .find(|path| path.is_file() && is_markdown(path))
@@ -2437,11 +2441,11 @@ fn run(startup_path: Option<PathBuf>) {
 
                 match chosen {
                     Some(path) => {
-                        let document = prepare_document(webview.app_handle(), path);
-                        let _ = webview.emit(EVENT_OPEN, &document);
+                        let document = prepare_document(window.app_handle(), path);
+                        let _ = window.emit(EVENT_OPEN, &document);
                     }
                     None => {
-                        let _ = webview.emit(
+                        let _ = window.emit(
                             EVENT_ERROR,
                             Notice {
                                 message: "Nothing to read: drop a file, not a folder.",
@@ -2450,14 +2454,10 @@ fn run(startup_path: Option<PathBuf>) {
                     }
                 }
             }
-            _ => {}
-        })
-        .on_window_event(|window, event| {
             // The last moment the geometry is readable; the window is already gone
             // by the time the run loop exits.
-            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
-                save_geometry(window);
-            }
+            tauri::WindowEvent::CloseRequested { .. } => save_geometry(window),
+            _ => {}
         })
         .build(tauri::generate_context!())
         .expect("failed to build MD Viewer")

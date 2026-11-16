@@ -8,7 +8,7 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Changes land under `[Unreleased]` first, in whichever of *Added*, *Changed*,
 *Fixed* or *Removed* fits; cutting a release renames that section to the version.
 
-## [Unreleased]
+## [0.6.1] - 2026-11-16
 
 ### Fixed
 

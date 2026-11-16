@@ -287,11 +287,13 @@ useful to anyone changing the internals.
   README.
 - Licence is MIT (`LICENSE`, `Cargo.toml`, `package.json`). Don't relicense
   without an explicit instruction.
-- Version `0.5.0` lives in five places, four of them mechanical:
+- Version `0.6.1` lives in five places, four of them mechanical:
   `src-tauri/Cargo.toml`, `package.json`, `src-tauri/tauri.conf.json`,
   `package-lock.json` (`npm install` rewrites it) and the `app_version` stub in
-  `preview/harness.html`. The README's `--version` example quotes it too. Grep for
-  the previous version rather than trusting memory.
+  `preview/harness.html`; `Cargo.lock` picks it up on the next build. The README
+  writes it as `<version>` and needs no edit, but `CHANGELOG.md` and the release
+  note named after it do carry it, as the tag does. Grep for the previous version
+  rather than trusting memory.
 - Icons are generated (`scripts/make-icons.ps1`) — don't hand-edit PNG/ICO.
   `src-tauri/gen/schemas/` is generated; leave it alone. `Cargo.lock` is present
   and not ignored: commit it (binary crate).
